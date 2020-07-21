@@ -28,7 +28,7 @@ def read_config(config_path):
     return params
 
 
-def main():
+def create_parser():
     parser = ArgumentParser(
         description="Send a message to pushover.",
         formatter_class=RawDescriptionHelpFormatter,
@@ -80,23 +80,32 @@ License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.""",
     )
+    return parser
 
-    args = parser.parse_args()
+
+def update_args_with_configuration(args):
     params = read_config(args.config)
     if args.priority == 2 and (args.retry is None or args.expire is None):
-        parser.error("priority of 2 requires expire and retry")
+        raise ValueError("priority of 2 requires expire and retry")
     if args.user in params["users"]:
-        user_key = params["users"][args.user]["user_key"]
-        device = params["users"][args.user]["device"]
+        args.user_key = params["users"][args.user]["user_key"]
+        args.device = params["users"][args.user]["device"]
     else:
-        user_key = args.user
-        device = None
-    token = args.token or params["token"]
+        args.user_key = args.user
+        args.device = None
+    args.token = args.token or params["token"]
 
-    Pushover(token).message(
-        user_key,
+
+def main():
+    parser = create_parser()
+
+    args = parser.parse_args()
+    update_args_with_configuration(args)
+
+    Pushover(args.token).message(
+        args.user_key,
         args.message,
-        device=device,
+        device=args.device,
         title=args.title,
         priority=args.priority,
         url=args.url,
