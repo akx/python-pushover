@@ -56,7 +56,6 @@ For more details and bug reports, see: https://github.com/Thibauth/python-pushov
                         (default: ~/.pushoverrc)",
         default="~/.pushoverrc",
     )
-    parser.add_argument("message", help="message to send")
     parser.add_argument("--url", help="additional url")
     parser.add_argument("--url-title", help="url title")
     parser.add_argument("--title", "-t", help="message title")
@@ -108,12 +107,7 @@ def update_args_with_configuration(args):
         raise ValueError("API token missing!")
 
 
-def main():
-    parser = create_parser()
-
-    args = parser.parse_args()
-    update_args_with_configuration(args)
-
+def send_message_from_args(args):
     Pushover(args.token).message(
         args.user_key,
         args.message,
@@ -126,6 +120,15 @@ def main():
         retry=args.retry,
         expire=args.expire,
     )
+
+
+def main():
+    parser = create_parser()
+    parser.add_argument("message", help="message to send")
+
+    args = parser.parse_args()
+    update_args_with_configuration(args)
+    send_message_from_args(args)
 
 
 if __name__ == "__main__":

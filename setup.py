@@ -13,7 +13,7 @@ setup(
     author="Thibaut Horel",
     author_email="thibaut.horel+pushover@gmail.com",
     packages=["pushover"],
-    entry_points={"console_scripts": ["pushover = pushover.cli:main"]},
+    entry_points={"console_scripts": ["pushover = pushover.cli:main", "pushover-wrap = pushover.wrap_cli:wrap_main"]},
     install_requires=["requests>=1.0"],
     license="GNU GPLv3",
 )
