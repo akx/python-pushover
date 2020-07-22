@@ -11,20 +11,22 @@ from pushover import Pushover
 def read_config(config_path):
     config_path = os.path.expanduser(config_path)
     config = configparser.RawConfigParser()
-    params = {"users": {}}
+    params = {"users": {}, "token": None}
     files = config.read(config_path)
     if not files:
         return params
-    params["token"] = config.get("main", "token")
     for name in config.sections():
-        if name != "main":
-            user = {}
-            user["user_key"] = config.get(name, "user_key")
-            try:
-                user["device"] = config.get(name, "device")
-            except configparser.NoOptionError:
-                user["device"] = None
-            params["users"][name] = user
+        user_config = {
+            key: value
+            for key, value in config.items(name)
+            if key in {"api_token", "device", "user_key"}
+        }
+        params["users"][name] = user_config
+        if name == "main" and user_config.get("api_token"):
+            # Legacy config compatibility:
+            # Move the "main" user's token, if any, to be the default token
+            params["token"] = user_config["api_token"]
+
     return params
 
 
@@ -35,12 +37,17 @@ def create_parser():
         epilog="""
 For more details and bug reports, see: https://github.com/Thibauth/python-pushover""",
     )
-    parser.add_argument("--token", help="API token")
+    parser.add_argument(
+        "--token", help="API token (optional, can be read from config too)"
+    )
     parser.add_argument(
         "--user",
         "-u",
-        help="User key or section name in the configuration",
-        required=True,
+        help="user key or section name in the configuration (default 'Default')",
+        default="Default",
+    )
+    parser.add_argument(
+        "--device", "-d", help="device key (optional, can be read from config too)",
     )
     parser.add_argument(
         "-c",
@@ -87,13 +94,18 @@ def update_args_with_configuration(args):
     params = read_config(args.config)
     if args.priority == 2 and (args.retry is None or args.expire is None):
         raise ValueError("priority of 2 requires expire and retry")
-    if args.user in params["users"]:
-        args.user_key = params["users"][args.user]["user_key"]
-        args.device = params["users"][args.user]["device"]
-    else:
-        args.user_key = args.user
-        args.device = None
+    user_info = params["users"].get(args.user)
     args.token = args.token or params["token"]
+    args.user_key = args.user
+    args.device = None
+    if user_info:
+        args.user_key = user_info.get("user_key", args.user_key)
+        args.device = user_info.get("device", args.device)
+        args.token = user_info.get("api_token", args.token)
+    if not args.user_key:
+        raise ValueError("User key missing!")
+    if not args.token:
+        raise ValueError("API token missing!")
 
 
 def main():
