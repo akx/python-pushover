@@ -71,8 +71,7 @@ Use ``pushover --help`` to see the list of available options.
 Configuration
 ~~~~~~~~~~~~~
 
-Both the ``pushover`` module and the ``pushover`` command line utility support
-reading arguments from a configuration file.
+The ``pushover`` command line utility supports reading arguments from a configuration file.
 
 The most basic configuration file looks like this:
 
@@ -82,6 +81,11 @@ The most basic configuration file looks like this:
     api_token=aaaaaa
     user_key=xxxxxx
 
+``python-pushover`` will attempt to read the configuration from
+``~/.pushoverrc`` by default. The section to read can be specified by using the
+``profile`` argument. With the configuration file above, you can send a message
+by simply doing: ``pushover --title "Hello" "Hello!"`` from the command line.
+
 You can have additional sections and specify a device as well:
 
 .. code-block:: ini
@@ -90,19 +94,6 @@ You can have additional sections and specify a device as well:
     api_token=bbbbbb
     user_key=yyyyyy
     device=iPhone
-
-``python-pushover`` will attempt to read the configuration from
-``~/.pushoverrc`` by default. The section to read can be specified by using the
-``profile`` argument. With the configuration file above, you can send a message
-by simply doing:
-
-.. code-block:: python
-
-    from pushover import Client
-
-    Client().send_message("Hello!", title="Hello")
-
-or ``pushover --title "Hello" "Hello!"`` from the command line.
 
 API
 ---
